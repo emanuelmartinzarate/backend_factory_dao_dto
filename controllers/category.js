@@ -1,72 +1,49 @@
-const Category = require('../models/mongo.model/entities/category')
-const { errorHandler } = require('../helpers/dbErrorHandler')
+const CategoryService = require('../services/categoryService')
+const CategoryDTO = require('../models/mongo.model/dto/categoryDTO')
 
-exports.create = (req, res) => {
-    const category = new Category(req.body)
-    category.save( (err, data) => {
-        if(err){
-            return res.status(400).json({
-                error: errorHandler(err)
-            })
-        }
+module.exports = class CategoryController{
+    constructor(){
+        this.categoryService = new CategoryService() 
+    }
+    create = async (req, res) => {
+        const category = CategoryDTO.create(req.body)
+        const data = await this.categoryService.create(category)
+        return res.json(data)
+    }
 
-        res.json({ data })
-    })
-}
-
-exports.categoryById = (req, res, next, id) => {
-    Category.findById(id).exec((err, category) => {
-        if(err || ! category){
-            return res.status(400).json({
-                error: 'Category does not exist'
-            })
-        }
+    categoryById = async (req, res, next, id) => {
+        const category = await this.categoryService.read(id)
         req.category = category
         next()
-    })
-}
+    }
 
-exports.read = (req,res) => {
-    return res.json(req.category)
-}
-
-exports.update = (req, res) => {
-    const category = req.category
-    category.name = req.body.name
-    category.save((err,data) => {
-        if(err){
-            return res.status(400).json({
-                error: errorHandler(err)
-            })
+    read = (req,res) => {
+        return res.json(req.category)
+    }
+    
+    update = async (req, res) => {
+        const category = req.category
+        if(category){
+            category.name = req.body.name
+            const data = await this.categoryService.update(category)
+            res.json(data)
+        }else{
+            res.json({error: 'Category not found'})
         }
+    }
 
+    remove = async (req, res) => {
+        const category = req.category
+        if(category){
+            await this.categoryService.delete(category)
+            res.json({msg: 'Category deleted'})
+        }else{
+            res.json({error: 'Category not found'})
+        }
+    }
+
+    list = async (req, res) => {
+        const data = await this.categoryService.list()
         res.json(data)
-    })
-}
-
-exports.remove = (req, res) => {
-    const category = req.category
-    category.remove((err,data) => {
-        if(err){
-            return res.status(400).json({
-                error: errorHandler(err)
-            })
-        }
-
-        res.json({
-            message: 'Category deleted'
-        })
-    })
-}
-
-exports.list = (req, res) => {
-    Category.find().exec((err,data) => {
-        if(err){
-            return res.status(400).json({
-                error: errorHandler(err)
-            })
-        }
-
-        res.json(data)
-    })
+    }
 }

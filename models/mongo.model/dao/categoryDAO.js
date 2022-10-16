@@ -1,60 +1,52 @@
-const baseDAO = require('./baseDAO')
-const Category = require('../models/mongo.model/entities/category')
+const Category = require('../entities/category')
+const errorHandler = require('../../../helpers/dbErrorHandler')
 
-class CategoryDAO extends baseDAO {
-    constructor(){
-        super()
 
-    }
+module.exports = class MongoCategoryDAO {
 
-    create = (category) => {
-        const category = new Category(category)
-        category.save( (err, data) => {
-            if(err){
-                return res.status(400).json({
-                    error: errorHandler(err)
-                })
-            }
-    
-            return data
-        })
-    }
-
-    read = (id) => {
-        Category.findById(id).exec((err, category) => {
-            if(err || ! category){
-                return res.status(400).json({
-                    error: 'Category does not exist'
-                })
-            }
+    create = async (categoryDto) => {
+        try {
+            const category = new Category(categoryDto)
+            await category.save()
             return category
-        })
+        } catch (e) {
+            console.log('Error to create Category', e)
+        }
     }
 
-    update = (category) => {
-        category.save((err,data) => {
-            if(err){
-                return res.status(400).json({
-                    error: errorHandler(err)
-                })
-            }
-    
+    read = async (id) => {
+        try{
+            const category = await Category.findById(id)
+            return category
+        } catch (e){
+            console.log('Error to get Category', e)
+        }
+    }
+
+    update = async (category) => {
+        try {
+            await category.save()
+            return category
+        } catch (error) {
+            console.log('Error to update Category', e)
+        }
+    }
+
+    delete = async (category) => {
+        try {
+            await category.remove()
+            return category
+        } catch (e) {
+            console.log('Error to delete Category', e)
+        }
+    }
+
+    list = async () => {
+        try {
+            const data = await Category.find()
             return data
-        })
-    }
-
-    delete = (category) => {
-        category.remove((err,data) => {
-            if(err){
-                return res.status(400).json({
-                    error: errorHandler(err)
-                })
-            }
-    
-            return 'Category deleted'
-            
-        })
+        } catch (error) {
+            console.log('Error to list Categories')            
+        }
     }
 }
-
-export default CategoryDAO
